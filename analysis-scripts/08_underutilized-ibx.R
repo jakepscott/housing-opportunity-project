@@ -161,9 +161,15 @@ units_low_den_r4_lower_upzone <- low_density %>%
 
 # Upzone all of R5 or R6 --------------------------------------------------
 units_upzone_r5_r6 <- df %>% 
+  filter(landuse_cat %in% c("One and Two Family",
+                            "Multi-Family Elevator", 
+                            "Mixed Resi/Commercial",
+                            "Multifamily Walk-Up")) %>% 
+  filter(str_sub(zonedist1, 1, 1) == "R")  %>% 
   filter(str_sub(zonedist1, 1, 1) == "R")  %>% 
   filter(zone_number %in% c(5,6)) %>% 
   mutate(upzone = 17.85801 - unitsres) %>% 
+  filter(upzone >= 0) %>% 
   group_by(zone_number) %>% 
   summarise(units = sum(upzone, na.rm = T)) %>% 
   mutate(cat = ifelse(zone_number == 5, "units_r5_match_r7", "units_r6_match_r7")) %>% 

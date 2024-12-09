@@ -202,7 +202,6 @@ low_density %>%
   group_by(high_den = zone_number >= 5) %>% 
   summarise(builds = sum(n))
 
-
 # Make buildings match the average units for their zone: 326,160
 units_low_den_r5_higher_match_mean <- low_density %>% 
   filter(str_sub(zonedist1, 1, 1) == "R")  %>% 
@@ -229,11 +228,16 @@ units_low_den_r4_lower_upzone <- low_density %>%
   pivot_longer(everything(),names_to = "cat", values_to = "units")  
 
 # Upzone all of R5 or R6 --------------------------------------------------
-units_upzone_r5_r6 <- df %>% 
+units_upzone_r5_r6 <- df %>%
+  filter(landuse_cat %in% c("One and Two Family",
+                            "Multi-Family Elevator", 
+                            "Mixed Resi/Commercial",
+                            "Multifamily Walk-Up")) %>% 
   filter(str_sub(zonedist1, 1, 1) == "R")  %>% 
   filter(zone_number %in% c(5,6)) %>% 
   # This comes from mean_units_by_zone, produced by units-for-underutilization-calcs.R
   mutate(upzone = 17.85801 - unitsres) %>% 
+  filter(upzone >= 0) %>% 
   group_by(zone_number) %>% 
   summarise(units = sum(upzone, na.rm = T)) %>% 
   mutate(cat = ifelse(zone_number == 5, "units_r5_match_r7", "units_r6_match_r7")) %>% 
@@ -255,7 +259,7 @@ full_units <- full_units %>%
                            cat == "units_parking_city" ~ "Build on city-owned parking lots",
                            cat == "units_churches" ~ "Build on open faith-based organization land",
                            cat == "units_commercial" ~ "Build on top of single-story retail",
-                           cat == "units_low_den_r5_higher_match_mean" ~ "Densify one and two unit properties to match average unit count of their zone",
+                           cat == "units_low_den_r5_higher_match_mean" ~ "Densify one and two unit properties in higher density zones to match average unit count of zone",
                            cat == "units_low_den_r4_match_r5" ~ "Densify one and two unit properties in R4 zone to match average unit count of R5 zone",
                            cat == "units_low_den_r4_match_r6" ~ "Densify one and two unit properties in R4 zone to match average unit count of R6 zone",
                            cat == "units_low_den_r4_match_r7" ~ "Densify one and two unit properties in R4 zone to match average unit count of R7 zone",
@@ -268,7 +272,7 @@ full_units %>%
   geom_col(fill = "#00BFFF") +
   geom_text(aes(label = prettyNum(round(units), big.mark = ",")),
             hjust = -.1) +
-  scale_x_discrete(labels = function(x){str_wrap(x,20)}) +
+  scale_x_discrete(labels = function(x){str_wrap(x,25)}) +
   scale_y_continuous(expand = expansion(c(0,.2)),
                      labels = function(y){prettyNum(y, big.mark = ",")}) +
   coord_flip() +
@@ -288,4 +292,4 @@ full_units %>%
                                      color = "grey30"))
 
 ggsave(here("figures/underutilization-column.png"),
-       dpi = 600, height = 10, width = 8, units = "in")
+       dpi = 600, height = 10.5, width = 8, units = "in")
